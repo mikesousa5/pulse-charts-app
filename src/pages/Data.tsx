@@ -2,6 +2,8 @@ import { Database, Download, Smartphone, Watch, Activity } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Navigation } from "@/components/Navigation";
+import { Header } from "@/components/Header";
 
 const importSources = [
   {
@@ -42,6 +44,8 @@ const Data = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
+      <Navigation />
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="mb-8">

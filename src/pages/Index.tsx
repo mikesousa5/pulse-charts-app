@@ -5,6 +5,7 @@ import { WorkoutCard } from "@/components/WorkoutCard";
 import { RecentWorkout } from "@/components/RecentWorkout";
 import { AddWorkoutDialog } from "@/components/AddWorkoutDialog";
 import { Navigation } from "@/components/Navigation";
+import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -94,6 +95,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
       <Navigation />
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
