@@ -4,10 +4,12 @@ import { StatCard } from "@/components/StatCard";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { RecentWorkout } from "@/components/RecentWorkout";
 import { AddWorkoutDialog } from "@/components/AddWorkoutDialog";
+import { Navigation } from "@/components/Navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-const chartData = [
+const weeklyData = [
   { day: "Seg", workouts: 2 },
   { day: "Ter", workouts: 1 },
   { day: "Qua", workouts: 3 },
@@ -15,6 +17,28 @@ const chartData = [
   { day: "Sex", workouts: 1 },
   { day: "Sáb", workouts: 2 },
   { day: "Dom", workouts: 1 },
+];
+
+const monthlyData = [
+  { day: "Sem 1", workouts: 12 },
+  { day: "Sem 2", workouts: 15 },
+  { day: "Sem 3", workouts: 10 },
+  { day: "Sem 4", workouts: 14 },
+];
+
+const yearlyData = [
+  { day: "Jan", workouts: 45 },
+  { day: "Fev", workouts: 52 },
+  { day: "Mar", workouts: 48 },
+  { day: "Abr", workouts: 55 },
+  { day: "Mai", workouts: 50 },
+  { day: "Jun", workouts: 58 },
+  { day: "Jul", workouts: 62 },
+  { day: "Ago", workouts: 60 },
+  { day: "Set", workouts: 54 },
+  { day: "Out", workouts: 48 },
+  { day: "Nov", workouts: 0 },
+  { day: "Dez", workouts: 0 },
 ];
 
 const recentWorkouts = [
@@ -44,9 +68,33 @@ const recentWorkouts = [
 
 const Index = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [period, setPeriod] = useState<"weekly" | "monthly" | "yearly">("weekly");
+
+  const getChartData = () => {
+    switch (period) {
+      case "monthly":
+        return monthlyData;
+      case "yearly":
+        return yearlyData;
+      default:
+        return weeklyData;
+    }
+  };
+
+  const getPeriodLabel = () => {
+    switch (period) {
+      case "monthly":
+        return "Atividade Mensal";
+      case "yearly":
+        return "Atividade Anual";
+      default:
+        return "Atividade Semanal";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
@@ -95,11 +143,23 @@ const Index = () => {
         {/* Chart */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Atividade Semanal</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>{getPeriodLabel()}</CardTitle>
+              <Select value={period} onValueChange={(value: any) => setPeriod(value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Selecionar período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">Semanal</SelectItem>
+                  <SelectItem value="monthly">Mensal</SelectItem>
+                  <SelectItem value="yearly">Anual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
+              <BarChart data={getChartData()}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis 
                   dataKey="day" 
