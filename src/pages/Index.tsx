@@ -4,11 +4,23 @@ import { StatCard } from "@/components/StatCard";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { RecentWorkout } from "@/components/RecentWorkout";
 import { AddWorkoutDialog } from "@/components/AddWorkoutDialog";
+import { EditWorkoutDialog } from "@/components/EditWorkoutDialog";
 import { Navigation } from "@/components/Navigation";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
+import { useToast } from "@/hooks/use-toast";
 
 const weeklyData = [
   { day: "Seg", workouts: 2 },
@@ -42,16 +54,28 @@ const yearlyData = [
   { day: "Dez", workouts: 0 },
 ];
 
-const recentWorkouts = [
+interface Workout {
+  id: string | number;
+  type: "gym" | "run";
+  title: string;
+  date: string;
+  duration: string;
+  distance?: string;
+  calories: string;
+}
+
+const initialWorkouts: Workout[] = [
   {
-    type: "gym" as const,
+    id: 1,
+    type: "gym",
     title: "Treino de Peito",
     date: "Hoje, 18:30",
     duration: "45 min",
     calories: "320 kcal",
   },
   {
-    type: "run" as const,
+    id: 2,
+    type: "run",
     title: "Corrida Matinal",
     date: "Ontem, 07:00",
     duration: "30 min",
@@ -59,7 +83,8 @@ const recentWorkouts = [
     calories: "280 kcal",
   },
   {
-    type: "gym" as const,
+    id: 3,
+    type: "gym",
     title: "Treino de Pernas",
     date: "2 dias atrás",
     duration: "60 min",
@@ -68,8 +93,14 @@ const recentWorkouts = [
 ];
 
 const Index = () => {
+  const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [period, setPeriod] = useState<"weekly" | "monthly" | "yearly">("weekly");
+  const [workouts, setWorkouts] = useState<Workout[]>(initialWorkouts);
+  const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
+  const [workoutToDelete, setWorkoutToDelete] = useState<Workout | null>(null);
 
   const getChartData = () => {
     switch (period) {
@@ -91,6 +122,33 @@ const Index = () => {
       default:
         return "Atividade Semanal";
     }
+  };
+
+  const handleEditWorkout = (workout: Workout) => {
+    setSelectedWorkout(workout);
+    setEditDialogOpen(true);
+  };
+
+  const handleDeleteWorkout = (workout: Workout) => {
+    setWorkoutToDelete(workout);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteWorkout = () => {
+    if (workoutToDelete) {
+      setWorkouts(workouts.filter(w => w.id !== workoutToDelete.id));
+      toast({
+        title: "Workout Eliminado",
+        description: `${workoutToDelete.title} foi eliminado com sucesso.`,
+        variant: "destructive",
+      });
+      setDeleteDialogOpen(false);
+      setWorkoutToDelete(null);
+    }
+  };
+
+  const handleSaveWorkout = (updatedWorkout: Workout) => {
+    setWorkouts(workouts.map(w => w.id === updatedWorkout.id ? updatedWorkout : w));
   };
 
   return (
@@ -163,27 +221,37 @@ const Index = () => {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={getChartData()}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="day" 
+                <XAxis
+                  dataKey="day"
                   stroke="hsl(var(--muted-foreground))"
                   style={{ fontSize: '12px' }}
                 />
-                <YAxis 
+                <YAxis
                   stroke="hsl(var(--muted-foreground))"
                   style={{ fontSize: '12px' }}
                 />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
                   }}
                 />
-                <Bar 
-                  dataKey="workouts" 
-                  fill="hsl(var(--primary))" 
+                <Bar
+                  dataKey="workouts"
+                  fill="hsl(var(--primary))"
                   radius={[8, 8, 0, 0]}
-                />
+                >
+                  <LabelList
+                    dataKey="workouts"
+                    position="top"
+                    style={{
+                      fill: "hsl(var(--foreground))",
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}
+                  />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -193,14 +261,49 @@ const Index = () => {
         <div>
           <h2 className="text-2xl font-bold text-foreground mb-4">Workouts Recentes</h2>
           <div className="space-y-3">
-            {recentWorkouts.map((workout, index) => (
-              <RecentWorkout key={index} {...workout} />
+            {workouts.map((workout) => (
+              <RecentWorkout
+                key={workout.id}
+                {...workout}
+                onEdit={() => handleEditWorkout(workout)}
+                onDelete={() => handleDeleteWorkout(workout)}
+              />
             ))}
           </div>
         </div>
 
         {/* Add Workout Dialog */}
         <AddWorkoutDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+
+        {/* Edit Workout Dialog */}
+        <EditWorkoutDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          workout={selectedWorkout}
+          onSave={handleSaveWorkout}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Tens a certeza?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação não pode ser revertida. Isto irá eliminar permanentemente o workout
+                <span className="font-semibold"> "{workoutToDelete?.title}"</span>.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDeleteWorkout}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
