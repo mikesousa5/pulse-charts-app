@@ -9,6 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Dumbbell } from "lucide-react";
 
 const Auth = () => {
+  console.log("Auth component renderizando");
+
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
@@ -17,8 +19,11 @@ const Auth = () => {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
+  console.log("Auth - user:", user);
+
   useEffect(() => {
     if (user) {
+      console.log("Auth - Redirecionando para / pois user existe");
       navigate("/");
     }
   }, [user, navigate]);
