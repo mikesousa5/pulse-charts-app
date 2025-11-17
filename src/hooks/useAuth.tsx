@@ -75,12 +75,31 @@ export const useAuth = () => {
         title: "Login efetuado!",
         description: "Bem-vindo de volta.",
       });
-      
+
       navigate("/");
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro ao fazer login",
+        description: error.message,
+      });
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao fazer login com Google",
         description: error.message,
       });
     }
@@ -112,6 +131,7 @@ export const useAuth = () => {
     loading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
   };
 };
