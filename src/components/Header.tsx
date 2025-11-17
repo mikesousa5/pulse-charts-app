@@ -1,5 +1,5 @@
-import { Dumbbell, User, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Dumbbell, User, LogOut, ListChecks, Home, Database } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,20 +14,46 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
+  const location = useLocation();
 
   const getUserInitials = () => {
     if (!user?.email) return "U";
     return user.email.charAt(0).toUpperCase();
   };
 
+  const isActive = (path: string) => location.pathname === path;
+
   return (
     <header className="border-b border-border bg-card">
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
-            <Dumbbell className="h-6 w-6" />
-            <span className="font-semibold text-lg">FitTrack</span>
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
+              <Dumbbell className="h-6 w-6" />
+              <span className="font-semibold text-lg">DadosDeTreino.pt</span>
+            </Link>
+
+            <nav className="hidden md:flex gap-1">
+              <Link to="/">
+                <Button variant={isActive("/") ? "secondary" : "ghost"} size="sm" className="gap-2">
+                  <Home className="h-4 w-4" />
+                  Início
+                </Button>
+              </Link>
+              <Link to="/workouts">
+                <Button variant={isActive("/workouts") ? "secondary" : "ghost"} size="sm" className="gap-2">
+                  <ListChecks className="h-4 w-4" />
+                  Treinos
+                </Button>
+              </Link>
+              <Link to="/data">
+                <Button variant={isActive("/data") ? "secondary" : "ghost"} size="sm" className="gap-2">
+                  <Database className="h-4 w-4" />
+                  Dados
+                </Button>
+              </Link>
+            </nav>
+          </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

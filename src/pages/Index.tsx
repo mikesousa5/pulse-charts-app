@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Activity, Dumbbell, Footprints, TrendingUp, Flame } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { WorkoutCard } from "@/components/WorkoutCard";
@@ -8,63 +8,93 @@ import { Navigation } from "@/components/Navigation";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Tables } from "@/integrations/supabase/types";
 
-const weeklyData = [
-  { day: "Seg", workouts: 0 },
-  { day: "Ter", workouts: 0 },
-  { day: "Qua", workouts: 0 },
-  { day: "Qui", workouts: 0 },
-  { day: "Sex", workouts: 0 },
-  { day: "Sáb", workouts: 0 },
-  { day: "Dom", workouts: 0 },
-];
+type Workout = Tables<"workouts">;
 
-const monthlyData = [
-  { day: "Sem 1", workouts: 0 },
-  { day: "Sem 2", workouts: 0 },
-  { day: "Sem 3", workouts: 0 },
-  { day: "Sem 4", workouts: 0 },
-];
+const MUSCLE_GROUP_COLORS = {
+  bicep: "#3b82f6",
+  tricep: "#8b5cf6",
+  costas: "#10b981",
+  abdominais: "#f59e0b",
+  pernas: "#ef4444",
+  gemeos: "#ec4899",
+};
 
-const yearlyData = [
-  { day: "Jan", workouts: 0 },
-  { day: "Fev", workouts: 0 },
-  { day: "Mar", workouts: 0 },
-  { day: "Abr", workouts: 0 },
-  { day: "Mai", workouts: 0 },
-  { day: "Jun", workouts: 0 },
-  { day: "Jul", workouts: 0 },
-  { day: "Ago", workouts: 0 },
-  { day: "Set", workouts: 0 },
-  { day: "Out", workouts: 0 },
-  { day: "Nov", workouts: 0 },
-  { day: "Dez", workouts: 0 },
-];
-
-const recentWorkouts: Array<{
-  type: "gym" | "run";
-  title: string;
-  date: string;
-  duration: string;
-  distance?: string;
-  calories: string;
-}> = [];
+const muscleGroupLabels: Record<string, string> = {
+  bicep: "Bíceps",
+  tricep: "Tríceps",
+  costas: "Costas",
+  abdominais: "Abdominais",
+  pernas: "Pernas",
+  gemeos: "Gémeos",
+};
 
 const Index = () => {
+  const { user } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [period, setPeriod] = useState<"weekly" | "monthly" | "yearly">("weekly");
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const getChartData = () => {
-    switch (period) {
-      case "monthly":
-        return monthlyData;
-      case "yearly":
-        return yearlyData;
-      default:
-        return weeklyData;
+  useEffect(() => {
+    if (user) {
+      fetchWorkouts();
+    }
+  }, [user]);
+
+  const fetchWorkouts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("workouts")
+        .select("*")
+        .order("date", { ascending: false });
+
+      if (error) throw error;
+      setWorkouts(data || []);
+    } catch (error: any) {
+      console.error("Error fetching workouts:", error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const getMuscleGroupData = () => {
+    const counts: Record<string, number> = {};
+
+    workouts.forEach((workout) => {
+      if (workout.muscle_group) {
+        counts[workout.muscle_group] = (counts[workout.muscle_group] || 0) + 1;
+      }
+    });
+
+    return Object.entries(counts).map(([key, value]) => ({
+      name: muscleGroupLabels[key] || key,
+      value,
+      color: MUSCLE_GROUP_COLORS[key as keyof typeof MUSCLE_GROUP_COLORS] || "#6366f1",
+    }));
+  };
+
+  const totalWorkouts = workouts.length;
+  const totalDistance = workouts
+    .filter((w) => w.type === "run" && w.distance)
+    .reduce((sum, w) => sum + (w.distance || 0), 0);
+
+  const totalCalories = workouts
+    .filter((w) => w.calories)
+    .reduce((sum, w) => sum + (w.calories || 0), 0);
+
+  const recentWorkouts = workouts.slice(0, 5).map((workout) => ({
+    type: workout.type as "gym" | "run",
+    title: workout.type === "gym" ? (workout.exercise || "Treino") : "Corrida",
+    date: new Date(workout.date).toLocaleDateString("pt-PT"),
+    duration: `${workout.duration} min`,
+    distance: workout.distance ? `${workout.distance} km` : undefined,
+    calories: `${workout.calories || 0} kcal`,
+  }));
 
   const getPeriodLabel = () => {
     switch (period) {
@@ -77,6 +107,8 @@ const Index = () => {
     }
   };
 
+  const muscleGroupData = getMuscleGroupData();
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -84,36 +116,36 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Fitness Tracker</h1>
-          <p className="text-muted-foreground">Gere os teus workouts e acompanha o teu progresso</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">DadosDeTreino.pt</h1>
+          <p className="text-muted-foreground">Gere os teus treinos e acompanha o teu progresso</p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatCard
-            title="Total de Workouts"
-            value="0"
+            title="Total de Treinos"
+            value={totalWorkouts.toString()}
             icon={Activity}
-            trend="Sem dados"
+            trend={totalWorkouts > 0 ? `${totalWorkouts} treinos` : "Sem dados"}
           />
           <StatCard
             title="Distância Total"
-            value="0 km"
+            value={`${totalDistance.toFixed(1)} km`}
             icon={TrendingUp}
-            trend="Sem dados"
+            trend={totalDistance > 0 ? "Corrida" : "Sem dados"}
           />
           <StatCard
             title="Calorias Queimadas"
-            value="0"
+            value={totalCalories.toString()}
             icon={Flame}
-            trend="Sem dados"
+            trend={totalCalories > 0 ? "Total estimado" : "Sem dados"}
           />
         </div>
 
         {/* Add Workout Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <WorkoutCard
-            title="Workout de Ginásio"
+            title="Treino de Ginásio"
             description="Regista o teu treino de força e resistência"
             icon={Dumbbell}
             onClick={() => setDialogOpen(true)}
@@ -126,59 +158,49 @@ const Index = () => {
           />
         </div>
 
-        {/* Chart */}
-        <Card className="mb-8">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>{getPeriodLabel()}</CardTitle>
-              <Select value={period} onValueChange={(value: any) => setPeriod(value)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Selecionar período" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="weekly">Semanal</SelectItem>
-                  <SelectItem value="monthly">Mensal</SelectItem>
-                  <SelectItem value="yearly">Anual</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={getChartData()}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="day" 
-                  stroke="hsl(var(--muted-foreground))"
-                  style={{ fontSize: '12px' }}
-                />
-                <YAxis 
-                  stroke="hsl(var(--muted-foreground))"
-                  style={{ fontSize: '12px' }}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Bar 
-                  dataKey="workouts" 
-                  fill="hsl(var(--primary))" 
-                  radius={[8, 8, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        {/* Muscle Group Chart */}
+        {muscleGroupData.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Grupos Musculares Trabalhados</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={muscleGroupData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {muscleGroupData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                    }}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Recent Workouts */}
         <div>
-          <h2 className="text-2xl font-bold text-foreground mb-4">Workouts Recentes</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-4">Treinos Recentes</h2>
           <div className="space-y-3">
             {recentWorkouts.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">Ainda não tens workouts registados</p>
+              <p className="text-muted-foreground text-center py-8">Ainda não tens treinos registados</p>
             ) : (
               recentWorkouts.map((workout, index) => (
                 <RecentWorkout key={index} {...workout} />
@@ -188,7 +210,11 @@ const Index = () => {
         </div>
 
         {/* Add Workout Dialog */}
-        <AddWorkoutDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+        <AddWorkoutDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onWorkoutAdded={fetchWorkouts}
+        />
       </div>
     </div>
   );
