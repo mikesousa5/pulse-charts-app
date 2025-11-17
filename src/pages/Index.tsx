@@ -4,7 +4,6 @@ import { StatCard } from "@/components/StatCard";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { RecentWorkout } from "@/components/RecentWorkout";
 import { AddWorkoutDialog } from "@/components/AddWorkoutDialog";
-import { Navigation } from "@/components/Navigation";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -53,10 +52,20 @@ const Index = () => {
         .select("*")
         .order("date", { ascending: false });
 
-      if (error) throw error;
-      setWorkouts(data || []);
+      if (error) {
+        // Se a tabela não existe ainda, apenas use array vazio
+        if (error.code === '42P01' || error.message.includes('does not exist')) {
+          console.warn("Tabela 'workouts' ainda não existe. Aplique a migração no Supabase.");
+          setWorkouts([]);
+        } else {
+          throw error;
+        }
+      } else {
+        setWorkouts(data || []);
+      }
     } catch (error: any) {
       console.error("Error fetching workouts:", error);
+      setWorkouts([]);
     } finally {
       setLoading(false);
     }
@@ -112,7 +121,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <Navigation />
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="mb-8">

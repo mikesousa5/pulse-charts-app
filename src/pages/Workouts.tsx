@@ -51,14 +51,24 @@ export default function Workouts() {
         .select("*")
         .order("date", { ascending: false });
 
-      if (error) throw error;
-      setWorkouts(data || []);
+      if (error) {
+        // Se a tabela não existe ainda, apenas use array vazio
+        if (error.code === '42P01' || error.message.includes('does not exist')) {
+          console.warn("Tabela 'workouts' ainda não existe. Aplique a migração no Supabase.");
+          setWorkouts([]);
+        } else {
+          throw error;
+        }
+      } else {
+        setWorkouts(data || []);
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro ao carregar treinos",
         description: error.message,
       });
+      setWorkouts([]);
     } finally {
       setLoading(false);
     }

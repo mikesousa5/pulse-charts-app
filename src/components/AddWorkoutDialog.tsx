@@ -72,10 +72,20 @@ export const AddWorkoutDialog = ({ open, onOpenChange, onWorkoutAdded }: AddWork
         .select("*")
         .order("name");
 
-      if (error) throw error;
-      setExerciseTypes(data || []);
+      if (error) {
+        // Se a tabela não existe ainda, apenas use array vazio
+        if (error.code === '42P01' || error.message.includes('does not exist')) {
+          console.warn("Tabela 'exercise_types' ainda não existe. Aplique a migração no Supabase.");
+          setExerciseTypes([]);
+        } else {
+          throw error;
+        }
+      } else {
+        setExerciseTypes(data || []);
+      }
     } catch (error: any) {
       console.error("Error fetching exercise types:", error);
+      setExerciseTypes([]);
     }
   };
 
