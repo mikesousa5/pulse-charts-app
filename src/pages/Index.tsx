@@ -170,9 +170,9 @@ const Index = () => {
         {muscleGroupData.length > 0 && (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Grupos Musculares Trabalhados</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Grupos Musculares Trabalhados</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-2 sm:px-6">
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -180,8 +180,8 @@ const Index = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={100}
+                    label={false}
+                    outerRadius={window.innerWidth < 640 ? 70 : 100}
                     fill="#8884d8"
                     dataKey="value"
                   >
@@ -196,7 +196,9 @@ const Index = () => {
                       borderRadius: "8px",
                     }}
                   />
-                  <Legend />
+                  <Legend
+                    wrapperStyle={{ fontSize: window.innerWidth < 640 ? '12px' : '14px' }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>

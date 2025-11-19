@@ -139,13 +139,13 @@ export default function Workouts() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {workouts.map((workout) => (
               <Card key={workout.id} className="relative">
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-xl">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg sm:text-xl truncate">
                         {workout.type === "gym" ? workout.exercise : "Corrida"}
                       </CardTitle>
                       {workout.muscle_group && (
@@ -154,11 +154,11 @@ export default function Workouts() {
                         </CardDescription>
                       )}
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-9 w-9 sm:h-8 sm:w-8 touch-manipulation"
                         onClick={() => {
                           // TODO: Implement edit functionality
                           toast({
@@ -172,7 +172,7 @@ export default function Workouts() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        className="h-9 w-9 sm:h-8 sm:w-8 text-destructive hover:text-destructive touch-manipulation"
                         onClick={() => confirmDelete(workout.id)}
                       >
                         <Trash2 className="h-4 w-4" />
