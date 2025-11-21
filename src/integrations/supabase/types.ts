@@ -14,6 +14,37 @@ export type Database = {
   }
   public: {
     Tables: {
+      exercise_types: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          muscle_group: Database["public"]["Enums"]["muscle_group"] | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          muscle_group?: Database["public"]["Enums"]["muscle_group"] | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          muscle_group?: Database["public"]["Enums"]["muscle_group"] | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_types_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -38,6 +69,79 @@ export type Database = {
         }
         Relationships: []
       }
+      workouts: {
+        Row: {
+          id: string
+          user_id: string
+          type: Database["public"]["Enums"]["workout_type"]
+          date: string
+          exercise: string | null
+          exercise_type_id: string | null
+          muscle_group: Database["public"]["Enums"]["muscle_group"] | null
+          sets: number | null
+          reps: number | null
+          weight: number | null
+          distance: number | null
+          pace: string | null
+          duration: number | null
+          calories: number | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: Database["public"]["Enums"]["workout_type"]
+          date?: string
+          exercise?: string | null
+          exercise_type_id?: string | null
+          muscle_group?: Database["public"]["Enums"]["muscle_group"] | null
+          sets?: number | null
+          reps?: number | null
+          weight?: number | null
+          distance?: number | null
+          pace?: string | null
+          duration?: number | null
+          calories?: number | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: Database["public"]["Enums"]["workout_type"]
+          date?: string
+          exercise?: string | null
+          exercise_type_id?: string | null
+          muscle_group?: Database["public"]["Enums"]["muscle_group"] | null
+          sets?: number | null
+          reps?: number | null
+          weight?: number | null
+          distance?: number | null
+          pace?: string | null
+          duration?: number | null
+          calories?: number | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workouts_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workouts_exercise_type_id_fkey"
+            columns: ["exercise_type_id"]
+            referencedRelation: "exercise_types"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -46,7 +150,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      muscle_group: "bicep" | "tricep" | "costas" | "abdominais" | "pernas" | "gemeos"
+      workout_type: "gym" | "run"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -173,6 +278,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      muscle_group: ["bicep", "tricep", "costas", "abdominais", "pernas", "gemeos"] as const,
+      workout_type: ["gym", "run"] as const,
+    },
   },
 } as const

@@ -11,9 +11,12 @@ export const useAuth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("useAuth - Inicializando");
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("useAuth - Auth state changed:", event, session);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -22,8 +25,12 @@ export const useAuth = () => {
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("useAuth - Sessão existente:", session);
       setSession(session);
       setUser(session?.user ?? null);
+      setLoading(false);
+    }).catch((error) => {
+      console.error("useAuth - Erro ao obter sessão:", error);
       setLoading(false);
     });
 
@@ -75,12 +82,31 @@ export const useAuth = () => {
         title: "Login efetuado!",
         description: "Bem-vindo de volta.",
       });
-      
+
       navigate("/");
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro ao fazer login",
+        description: error.message,
+      });
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao fazer login com Google",
         description: error.message,
       });
     }
@@ -112,6 +138,7 @@ export const useAuth = () => {
     loading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
   };
 };
